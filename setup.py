@@ -15,9 +15,9 @@ How to build and upload this package to Local site:
     python setup.py install
 '''
 
-_version_re = re.compile(r"__version__\s+=\s+(.*)")
+_version_re = re.compile(r"ROBOT_LIBRARY_VERSION\s+=\s+(.*)")
 
-with open("robotframework_sqlcli/__init__.py", "rb") as f:
+with open("SQLCliLibrary/SQLCliLibrary.py", "rb") as f:
     version = str(
         ast.literal_eval(_version_re.search(f.read().decode("utf-8")).group(1))
     )
@@ -32,18 +32,22 @@ def open_file(filename):
 readme = open_file("README.md")
 
 setup(
-    name='robotframework-sqlcli',
+    name='robotframework-sqlclilibrary',
     version=version,
     description='SQL Command tool, use JDBC, jaydebeapi',
     long_description=readme,
     keywords='robotframework sqlcli',
     platforms='any',
-    install_requires=['robotslacker-sqlcli',],
+    install_requires=['robotframework', 'robotslacker-sqlcli',],
 
     author='RobotSlacker',
     author_email='184902652@qq.com',
-    url='https://github.com/robotslacker/robotframework-sqlcli',
+    url='https://github.com/robotslacker/robotframework-sqlclilibrary',
 
-    packages=find_packages(),
-    package_data={"robotframework-sqlcli": []},
+    packages     = ['SQLCliLibrary'],
+    package_data = {"SQLCliLibrary": []},
+
+    entry_points={
+        "distutils.commands": ["lint = tasks:lint", "test = tasks:test"],
+    },
 )
