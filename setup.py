@@ -17,7 +17,7 @@ How to build and upload this package to Local site:
 
 _version_re = re.compile(r"ROBOT_LIBRARY_VERSION\s+=\s+(.*)")
 
-with open("SQLCliLibrary/SQLCliLibrary.py", "rb") as f:
+with open("SQLCliLibrary/__init__.py", "rb") as f:
     version = str(
         ast.literal_eval(_version_re.search(f.read().decode("utf-8")).group(1))
     )
@@ -45,6 +45,6 @@ setup(
     url='https://github.com/robotslacker/robotframework-sqlclilibrary',
 
     zip_safe = False,
-    packages     = find_packages(),
-
+    packages     = ['SQLCliLibrary'],
+    package_data = {'SQLCliLibrary': []}
 )

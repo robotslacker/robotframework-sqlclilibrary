@@ -2,7 +2,7 @@
 from sqlcli.main import SQLCli
 
 
-class SQLCliLibrary(object):
+class RunSQLCli(object):
     """
     *** Settings ***
     Library   SQLCliLibrary
@@ -11,9 +11,7 @@ class SQLCliLibrary(object):
     Execute_SQL_Script
         Execute SQL Script  p_szSQLScript_FileName  p_szLogOutPutFileName
     """
-    ROBOT_LIBRARY_SCOPE = 'GLOBAL'
-    ROBOT_LIBRARY_DOC_FORMAT = 'HTML'
-    ROBOT_LIBRARY_VERSION = '0.0.2'
+
 
     def Execute_SQL_Script(self, p_szSQLScript_FileName, p_szLogOutPutFileName, *rest):
         cli = SQLCli(sqlscript=p_szSQLScript_FileName,
@@ -27,7 +25,7 @@ class SQLCliLibrary(object):
         pass
 
 def main():
-    xx = SQLCliLibrary()
+    xx = RunSQLCli()
     xx.Execute_SQL_Script("aa.sql", "aa.txt")
     print("Hello World")
 
