@@ -11,9 +11,9 @@ class SQLCliLibrary(object):
     Execute_SQL_Script
         Execute SQL Script  p_szSQLScript_FileName  p_szLogOutPutFileName
     """
-
+    ROBOT_LIBRARY_SCOPE = 'GLOBAL'
     ROBOT_LIBRARY_DOC_FORMAT = 'HTML'
-    ROBOT_LIBRARY_VERSION = '0.1.0'
+    ROBOT_LIBRARY_VERSION = '0.0.2'
 
     def Execute_SQL_Script(self, p_szSQLScript_FileName, p_szLogOutPutFileName, *rest):
         cli = SQLCli(sqlscript=p_szSQLScript_FileName,

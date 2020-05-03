@@ -44,10 +44,7 @@ setup(
     author_email='184902652@qq.com',
     url='https://github.com/robotslacker/robotframework-sqlclilibrary',
 
-    packages     = ['SQLCliLibrary'],
-    package_data = {"SQLCliLibrary": []},
+    zip_safe = False,
+    packages     = find_packages(),
 
-    entry_points={
-        "distutils.commands": ["lint = tasks:lint", "test = tasks:test"],
-    },
 )
