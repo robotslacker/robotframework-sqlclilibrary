@@ -1,0 +1,15 @@
+.idea/
+.vscode/
+.cache/
+.coverage/
+.coverage.*
+localtest/
+build/
+dist/
+*egg-info/
+htmlcov/
+
+*.pyc
+*.deb
+*.swp
+
