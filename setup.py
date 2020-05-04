@@ -3,7 +3,7 @@
 import ast
 from io import open
 import re
-from setuptools import setup, find_packages
+from setuptools import setup
 
 '''
 How to build and upload this package to PyPi
