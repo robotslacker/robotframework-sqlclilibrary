@@ -9,26 +9,15 @@ class RunSQLCli(object):
 
     *** Testcases ***
     Execute_SQL_Script
-        Execute SQL Script  p_szSQLScript_FileName  p_szLogOutPutFileName
+        Execute SQL Script  SQLScript_FileName  LogOutPutFileName
     """
-
-
-    def Execute_SQL_Script(self, p_szSQLScript_FileName, p_szLogOutPutFileName, *rest):
+    @staticmethod
+    def Execute_SQL_Script(p_szSQLScript_FileName, p_szLogOutPutFileName):
         cli = SQLCli(sqlscript=p_szSQLScript_FileName,
                      logfilename=p_szLogOutPutFileName)
         cli.run_cli()
 
-    def keyword(self):
-        pass
-
-    def __init__(self):
-        pass
-
-def main():
-    xx = RunSQLCli()
-    xx.Execute_SQL_Script("aa.sql", "aa.txt")
-    print("Hello World")
-
 
 if __name__ == '__main__':
-    main()
+    print("RunSQLCli. Please use this in RobotFramework.")
+    RunSQLCli.Execute_SQL_Script("test.sql", "test.log")
