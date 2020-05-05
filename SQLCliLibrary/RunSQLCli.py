@@ -13,6 +13,8 @@ class RunSQLCli(object):
     """
     @staticmethod
     def Execute_SQL_Script(p_szSQLScript_FileName, p_szLogOutPutFileName):
+        """Execute sql script
+        """
         cli = SQLCli(sqlscript=p_szSQLScript_FileName,
                      logfilename=p_szLogOutPutFileName)
         cli.run_cli()
