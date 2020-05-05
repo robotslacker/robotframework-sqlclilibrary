@@ -3,17 +3,15 @@ from sqlcli.main import SQLCli
 
 
 class RunSQLCli(object):
-    """
-    *** Settings ***
-    Library   SQLCliLibrary
 
-    *** Testcases ***
-    Execute_SQL_Script
-        Execute SQL Script  SQLScript_FileName  LogOutPutFileName
-    """
     @staticmethod
     def Execute_SQL_Script(p_szSQLScript_FileName, p_szLogOutPutFileName):
-        """Execute sql script
+        """执行SQL脚本
+        输入参数：
+            p_szSQLScript_FileName         脚本文件名称
+            p_szLogOutPutFileName          结果日志文件名称
+        输出参数：
+            无
         """
         cli = SQLCli(sqlscript=p_szSQLScript_FileName,
                      logfilename=p_szLogOutPutFileName)

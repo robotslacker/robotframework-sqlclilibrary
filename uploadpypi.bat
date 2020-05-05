@@ -2,7 +2,7 @@ del /s/q dist\*
 del /s/q build\*
 python setup.py sdist
 python setup.py bdist_wheel --universal
-pip uninstall robotframework-sqlclilibrary
+pip uninstall --yes robotframework-sqlclilibrary
 python setup.py install
-
-twine upload dist/*
+python -m robot.libdoc .\SQLCliLibrary doc\SQLCliLibrary.html
+REM twine upload dist/*

@@ -11,4 +11,4 @@ Install robotframework-sqlcli
 
 ## Usage
     
-    [Doc](https://github.com/robotslacker/robotframework-sqlcli/blob/master/Doc.md)
+    [Doc](https://github.com/robotslacker/robotframework-sqlcli/blob/master/doc/SQLCliLibrary.html)
