@@ -15,9 +15,19 @@ class SQLCliLibrary(RunSQLCli):
 
     *** Test Cases ***
     E101Test
-        Execute SQL Script         e101.sql    e101.log
+        Execute SQL Script                   e101.sql    e101.log
     E102Test
-        Execute SQL Script         e102.sql    e102.log
+        Logon And Execute SQL Script         admin/123456 e102.sql    e102.log
+
+    关于脚本中文件名的写法：
+    1： 具体的全路径文件名称，
+    2： 当前目录下的文件名称
+    3： 所有定义在T_SOURCE中的目录下的相同名称文件
+
+    关于生成日志文件名的写法：
+    1： 如果日志文件名是一个全路径名，则按照全路径名来生成文件
+    2： 如果定义了T_WORK， 日志输出在T_WORK下
+    3： 生成在当前工作目录下
     ========================================================
 
     如何利用Robot来执行上述文件：
@@ -25,4 +35,4 @@ class SQLCliLibrary(RunSQLCli):
     """
     ROBOT_LIBRARY_SCOPE = 'GLOBAL'
     ROBOT_LIBRARY_DOC_FORMAT = 'TEXT'
-    ROBOT_LIBRARY_VERSION = '0.0.6'
+    ROBOT_LIBRARY_VERSION = '0.0.7'
