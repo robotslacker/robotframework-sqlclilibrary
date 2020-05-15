@@ -38,7 +38,7 @@ setup(
     long_description=readme,
     keywords='robotframework sqlcli',
     platforms='any',
-    install_requires=['robotframework', 'robotslacker-sqlcli',],
+    install_requires=['robotframework', 'robotslacker-sqlcli', 'jaydebeapi'],
 
     author='RobotSlacker',
     author_email='184902652@qq.com',
