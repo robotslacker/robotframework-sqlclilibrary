@@ -6,6 +6,21 @@ import shlex
 
 
 class RunSQLCli(object):
+    __BreakWithSQLerence  = False
+
+    def SQLCli_Break_When_Error(self, p_BreakWithSQLError):
+        """ 设置是否在遇到错误的时候中断该Case的后续运行
+        输入参数：
+             p_BreakWithSQLError:        是否在遇到SQL错误的时候中断，默认为不中断
+        返回值：
+            无
+
+        如果设置为True，则SQLCli运行会中断，Case会被判断执行失败
+        如果设置为False，则SQLCli运行不会中断，运行结果文件中有错误信息，供参考
+        """
+        if str(p_BreakWithSQLError).upper() == 'TRUE':
+            self.__BreakWithSQLerence = True
+
     def Logon_And_Execute_SQL_Script(self, p_szLogonString, p_szSQLScript_FileName, p_szLogOutPutFileName = None):
         """执行SQL脚本
         输入参数：
@@ -67,8 +82,12 @@ class RunSQLCli(object):
 
         cli = SQLCli(logon=p_szLogonString,
                      sqlscript=m_szSQLScript_FileName,
-                     logfilename=m_szLogOutPutFileName)
-        cli.run_cli()
+                     logfilename=m_szLogOutPutFileName,
+                     breakwitherror=self.__BreakWithSQLerence)
+        m_Result = cli.run_cli()
+        if self.__BreakWithSQLerence and not m_Result:
+            raise RuntimeError("SQL Execute failed.")
+
 
     def Execute_SQL_Script(self, p_szSQLScript_FileName, p_szLogOutPutFileName = None):
         """执行SQL脚本
