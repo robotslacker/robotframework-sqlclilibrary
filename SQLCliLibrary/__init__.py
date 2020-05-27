@@ -19,6 +19,11 @@ class SQLCliLibrary(RunSQLCli, LinkoopSQLParse):
         Execute SQL Script                   e101.sql    e101.log
     E102Test
         Logon And Execute SQL Script         admin/123456 e102.sql    e102.log
+    E103Test
+        SQLCli LoadDriver                    localtest\jdbcxxx.jar  com.xxx.xxx.jdbc.JdbcDriver
+        SQLCli Connect                       user password
+        SQLCli SubmitJob                     task1_sql 1 5
+        SQLCli WaitJob
 
     关于脚本中文件名的写法：
     1： 具体的全路径文件名称，
@@ -30,10 +35,11 @@ class SQLCliLibrary(RunSQLCli, LinkoopSQLParse):
     2： 如果定义了T_WORK， 日志输出在T_WORK下
     3： 生成在当前工作目录下
     ========================================================
+    SQLCli工具的详细信息，也可以参考： https://github.com/robotslacker/sqlcli/blob/master/Doc.md
 
     如何利用Robot来执行上述文件：
     $>  robot [test file]
     """
     ROBOT_LIBRARY_SCOPE = 'GLOBAL'
     ROBOT_LIBRARY_DOC_FORMAT = 'TEXT'
-    ROBOT_LIBRARY_VERSION = '0.0.9'
+    ROBOT_LIBRARY_VERSION = '0.0.10'

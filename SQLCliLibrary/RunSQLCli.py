@@ -1,12 +1,73 @@
 # -*- coding: UTF-8 -*-
 import os
+import traceback
+
 from sqlcli.main import SQLCli
 from robot.api import logger
 import shlex
 
 
 class RunSQLCli(object):
-    __BreakWithSQLerence  = False
+    __BreakWithSQLerence = False
+
+    __m_CliHandler__  = SQLCli(noconsole=True)
+
+    def SQLCli_Connect(self, p_ConnString):
+        """ 连接到数据库上
+        输入参数：
+             p_ConnString:        连接字符串，格式为:  user/Pass@jdbc.<driver_type><connect_type>://<host>:<port>/<service>
+        返回值：
+            无
+        """
+        self.__m_CliHandler__.DoSQL("CONNECT " + p_ConnString)
+
+    def SQLCli_LoadDriver(self, p_DriverFile, p_DriverClass):
+        """ 加载数据库驱动
+        输入参数：
+             p_DriverFile:        数据库驱动文件（Jar包） 的位置
+             p_DriverClass：      数据库驱动类
+        返回值：
+            无
+        """
+        self.__m_CliHandler__.DoSQL("LOADDRIVER " + p_DriverFile + " " + p_DriverClass)
+
+    def SQLCli_DoSQL(self, p_szSQLString):
+        """ 执行SQL脚本
+        输入参数：
+             p_szSQLString:        具体的SQL语句
+        返回值：
+            无
+        """
+        self.__m_CliHandler__.DoSQL(p_szSQLString)
+
+    def SQLCli_SubmitJOB(self, p_szScriptName, p_nCopies=1, p_nLoopCount=1):
+        """ 提交任务到后台作业
+        输入参数：
+             p_szScriptName:        脚本的名称
+             p_nCopies              并发执行的份数，默认为1
+             p_nLoopCount           循环执行的次数，默认为1
+        返回值：
+            无
+        """
+        self.__m_CliHandler__.DoSQL("SUBMITJOB " + p_szScriptName + " " + str(p_nCopies) + " " + str(p_nLoopCount))
+
+    def SQLCli_StartJOB(self, p_JobID="ALL"):
+        """ 启动所有后台任务
+        输入参数：
+             p_JobID:        需要启动的JOBID，默认是启动所有尚未启动的任务
+        返回值：
+            无
+        """
+        self.__m_CliHandler__.DoSQL("STARTJOB " + str(p_JobID))
+
+    def SQLCli_WaitJOB(self, p_JobID="ALL"):
+        """ 等待JOB全部完成
+        输入参数：
+             p_JobID:        需要等待的JOBID，默认是等待全部JOB完成
+        返回值：
+            无
+        """
+        self.__m_CliHandler__.DoSQL("WAITJOB " + str(p_JobID))
 
     def SQLCli_Break_When_Error(self, p_BreakWithSQLError):
         """ 设置是否在遇到错误的时候中断该Case的后续运行
@@ -20,6 +81,7 @@ class RunSQLCli(object):
         """
         if str(p_BreakWithSQLError).upper() == 'TRUE':
             self.__BreakWithSQLerence = True
+            self.__m_CliHandler__.DoSQL("SET WHENEVER_SQLERROR EXIT")
 
     def Logon_And_Execute_SQL_Script(self, p_szLogonString, p_szSQLScript_FileName, p_szLogOutPutFileName = None):
         """执行SQL脚本
@@ -88,7 +150,6 @@ class RunSQLCli(object):
         if self.__BreakWithSQLerence and not m_Result:
             raise RuntimeError("SQL Execute failed.")
 
-
     def Execute_SQL_Script(self, p_szSQLScript_FileName, p_szLogOutPutFileName = None):
         """执行SQL脚本
         输入参数：
@@ -103,4 +164,19 @@ class RunSQLCli(object):
 
 
 if __name__ == '__main__':
+    m_xxx = RunSQLCli()
+    try:
+        os.chdir("C:\\Work\\linkoop\\sqlcli\\")
+        m_xxx.SQLCli_Break_When_Error(True)
+        m_xxx.SQLCli_LoadDriver("localtest\\linkoopdb-jdbc-2.3.0.jar", "com.datapps.linkoopdb.jdbc.JdbcDriver")
+        m_xxx.SQLCli_Connect("admin/123456@jdbc:linkoopdb:tcp://192.168.174.23:9105/ldb")
+        m_xxx.SQLCli_SubmitJOB("stresstest\\q1.sql", 1 , 5)
+        m_xxx.SQLCli_StartJOB("ALL")
+        m_xxx.SQLCli_WaitJOB("ALL")
+
+    except Exception as e:
+        print('str(e):  ', str(e))
+        print('repr(e):  ', repr(e))
+        print('traceback.print_exc():\n%s' % traceback.print_exc())
+        print('traceback.format_exc():\n%s' % traceback.format_exc())
     print("RunSQLCli. Please use this in RobotFramework.")
