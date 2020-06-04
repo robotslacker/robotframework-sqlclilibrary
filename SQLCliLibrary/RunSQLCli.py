@@ -1,5 +1,6 @@
 # -*- coding: UTF-8 -*-
 import os
+import sys
 import traceback
 
 from sqlcli.main import SQLCli
@@ -8,9 +9,10 @@ import shlex
 
 
 class RunSQLCli(object):
-    __BreakWithSQLerence = False
+    __BreakWithSQLerence = False              # 是否遇到SQL错误就退出，默认是不退出
+    __EnableConsoleOutPut = False             # 是否关闭在Console上的显示，默认是不关闭
 
-    __m_CliHandler__  = SQLCli(noconsole=True)
+    __m_CliHandler__ = SQLCli(HeadlessMode=True)
 
     def SQLCli_Connect(self, p_ConnString):
         """ 连接到数据库上
@@ -82,8 +84,26 @@ class RunSQLCli(object):
         if str(p_BreakWithSQLError).upper() == 'TRUE':
             self.__BreakWithSQLerence = True
             self.__m_CliHandler__.DoSQL("SET WHENEVER_SQLERROR EXIT")
+        if str(p_BreakWithSQLError).upper() == 'FALSE':
+            self.__BreakWithSQLerence = False
+            self.__m_CliHandler__.DoSQL("SET WHENEVER_SQLERROR CONTINUE")
 
-    def Logon_And_Execute_SQL_Script(self, p_szLogonString, p_szSQLScript_FileName, p_szLogOutPutFileName = None):
+    def SQLCli_Enable_ConsoleOutput(self, p_ConsoleOutput):
+        """ 设置是否在在屏幕上显示SQL的执行过程
+        输入参数：
+             p_ConsoleOutput:        是否在在屏幕上显示SQL的执行过程， 默认是不显示
+        返回值：
+            无
+
+        如果设置为True，则所有SQL执行的过程不仅仅会记录在日之内，也会显示在控制台上
+        如果设置为False，则所有SQL执行的过程仅仅会记录在日之内，不会显示在控制台上
+        """
+        if str(p_ConsoleOutput).upper() == 'TRUE':
+            self.__EnableConsoleOutPut = True
+        if str(p_ConsoleOutput).upper() == 'FALSE':
+            self.__EnableConsoleOutPut = False
+
+    def Logon_And_Execute_SQL_Script(self, p_szLogonString, p_szSQLScript_FileName, p_szLogOutPutFileName=None):
         """执行SQL脚本
         输入参数：
             p_szLogonString                连接用户名，口令
@@ -94,63 +114,85 @@ class RunSQLCli(object):
         例子：
             Logon And Execute SQL Script     admin/123456 test.sql test.log
         """
-        m_szSQLScript_FileName = None
-        m_szLogOutPutFileName = None
+        try:
+            m_szSQLScript_FileName = None
 
-        # 判断是否全路径名
-        if os.path.exists(p_szSQLScript_FileName):
-            m_szSQLScript_FileName = p_szSQLScript_FileName
+            # 判断是否全路径名
+            if os.path.exists(p_szSQLScript_FileName):
+                m_szSQLScript_FileName = p_szSQLScript_FileName
 
-        # 检查T_SOURCE目录
-        if m_szSQLScript_FileName is None:
-            if "T_SOURCE" in os.environ:
-                T_SOURCE = os.environ["T_SOURCE"]
-                m_T_SOURCE_environs = shlex.shlex(T_SOURCE)
-                m_T_SOURCE_environs.whitespace = ','
-                m_T_SOURCE_environs.quotes = "'"
-                m_T_SOURCE_environs.whitespace_split = True
-                for m_SourceDirectory in list(m_T_SOURCE_environs):
-                    if os.path.exists(os.path.join(m_SourceDirectory, p_szSQLScript_FileName)):
-                        m_szSQLScript_FileName = os.path.join(m_SourceDirectory, p_szSQLScript_FileName)
-                        break
+            # 检查T_SOURCE目录
+            if m_szSQLScript_FileName is None:
+                if "T_SOURCE" in os.environ:
+                    T_SOURCE = os.environ["T_SOURCE"]
+                    m_T_SOURCE_environs = shlex.shlex(T_SOURCE)
+                    m_T_SOURCE_environs.whitespace = ','
+                    m_T_SOURCE_environs.quotes = "'"
+                    m_T_SOURCE_environs.whitespace_split = True
+                    for m_SourceDirectory in list(m_T_SOURCE_environs):
+                        if os.path.exists(os.path.join(m_SourceDirectory, p_szSQLScript_FileName)):
+                            m_szSQLScript_FileName = os.path.join(m_SourceDirectory, p_szSQLScript_FileName)
+                            break
+                else:
+                    logger.info("Skip T_SOURCE check. not defined.")
+
+            # 如果还是没有找到文件，则异常错误
+            if m_szSQLScript_FileName is None:
+                raise RuntimeError("Script [" + p_szSQLScript_FileName + "] does not exist.")
+
+            # 处理日志文件名
+            # 如果没有提供文件名， 有T_WORK，   日志是T_WORK下和SQL同名的.log文件
+            # 如果没有提供文件名， 没有T_WORK， 日志是当前目录下和SQL同名的.log文件
+            # 如果提供了文件名，   并且是全路径名， 用提供的名字
+            # 如果提供了文件名，   但不是全路径名，有T_WORK下，在T_WORK下生成提供的文件名
+            # 如果提供了文件名，   但不是全路径名，没有T_WORK下，在当前目录下生成提供的文件名
+            if p_szLogOutPutFileName is None:
+                if "T_WORK" in os.environ:
+                    m_szLogOutPutFileName = os.path.join(
+                        os.environ["T_WORK"],
+                        os.path.basename(p_szSQLScript_FileName).split('.')[0] + ".log")
+                    m_szLogOutPutFullFileName = os.path.join(os.environ["T_WORK"], m_szLogOutPutFileName)
+                else:
+                    m_szLogOutPutFileName = os.path.join(
+                        os.getcwd(),
+                        os.path.basename(p_szSQLScript_FileName).split('.')[0] + ".log")
+                    m_szLogOutPutFullFileName = os.path.join(os.getcwd(), m_szLogOutPutFileName)
             else:
-                logger.info("Skip T_SOURCE check. not defined.")
+                if os.path.exists(os.path.dirname(p_szLogOutPutFileName)):
+                    # 全路径名
+                    m_szLogOutPutFullFileName = p_szLogOutPutFileName
+                else:
+                    if "T_WORK" in os.environ:
+                        m_szLogOutPutFullFileName = os.path.join(os.environ["T_WORK"], p_szLogOutPutFileName)
+                    else:
+                        m_szLogOutPutFullFileName = os.path.join(os.getcwd(), p_szLogOutPutFileName)
 
-        # 如果还是没有找到文件，则异常错误
-        if m_szSQLScript_FileName is None:
-            raise RuntimeError("Script [" + p_szSQLScript_FileName + "] does not exist.")
-
-        # 处理日志文件名
-        if p_szLogOutPutFileName is None:
-            if "T_WORK" in os.environ:
-                m_szLogOutPutFileName = os.path.join(
-                    os.environ["T_WORK"],
-                    os.path.basename(p_szSQLScript_FileName).split('.')[0] + ".log")
+            sys.__stdout__.write('\n')                    # 打印一个空行，好保证在Robot上Console显示不错行
+            sys.__stdout__.write('===== Execute [' + m_szSQLScript_FileName + '] ========\n')
+            sys.__stdout__.write('===== LogFile [' + m_szLogOutPutFullFileName + '] ========\n')
+            if not self.__EnableConsoleOutPut:
+                myConsole = open(os.devnull, "w")
+                myHeadLessMode = True
             else:
-                m_szLogOutPutFileName = os.path.join(
-                    os.getcwd(),
-                    os.path.basename(p_szSQLScript_FileName).split('.')[0] + ".log")
+                myConsole = sys.__stdout__
+                myHeadLessMode = False
+            cli = SQLCli(logon=p_szLogonString,
+                         sqlscript=m_szSQLScript_FileName,
+                         logfilename=m_szLogOutPutFullFileName,
+                         Console=myConsole,
+                         HeadlessMode=myHeadLessMode,
+                         breakwitherror=self.__BreakWithSQLerence)
+            m_Result = cli.run_cli()
+            if self.__BreakWithSQLerence and not m_Result:
+                raise RuntimeError("SQL Execute failed.")
+        except Exception as ex:
+            logger.info('str(e):  ', str(ex))
+            logger.info('repr(e):  ', repr(ex))
+            logger.info('traceback.print_exc():\n%s' % traceback.print_exc())
+            logger.info('traceback.format_exc():\n%s' % traceback.format_exc())
+            raise RuntimeError("Internal error. SQL Execute failed.")
 
-        if m_szLogOutPutFileName is None:
-            m_log_dir = os.path.dirname(p_szLogOutPutFileName)
-            if os.path.exists(m_log_dir):
-                # 全路径名
-                m_szLogOutPutFileName = p_szLogOutPutFileName
-        if m_szLogOutPutFileName is None:
-            if "T_WORK" in os.environ:
-                m_szLogOutPutFileName = os.path.join(os.environ["T_WORK"], p_szLogOutPutFileName)
-        if m_szLogOutPutFileName is None:
-            m_szLogOutPutFileName = os.path.join(os.getcwd(), p_szLogOutPutFileName)
-
-        cli = SQLCli(logon=p_szLogonString,
-                     sqlscript=m_szSQLScript_FileName,
-                     logfilename=m_szLogOutPutFileName,
-                     breakwitherror=self.__BreakWithSQLerence)
-        m_Result = cli.run_cli()
-        if self.__BreakWithSQLerence and not m_Result:
-            raise RuntimeError("SQL Execute failed.")
-
-    def Execute_SQL_Script(self, p_szSQLScript_FileName, p_szLogOutPutFileName = None):
+    def Execute_SQL_Script(self, p_szSQLScript_FileName, p_szLogOutPutFileName=None):
         """执行SQL脚本
         输入参数：
             p_szSQLScript_FileName         脚本文件名称
@@ -170,7 +212,7 @@ if __name__ == '__main__':
         m_xxx.SQLCli_Break_When_Error(True)
         m_xxx.SQLCli_LoadDriver("localtest\\linkoopdb-jdbc-2.3.0.jar", "com.datapps.linkoopdb.jdbc.JdbcDriver")
         m_xxx.SQLCli_Connect("admin/123456@jdbc:linkoopdb:tcp://192.168.174.23:9105/ldb")
-        m_xxx.SQLCli_SubmitJOB("stresstest\\q1.sql", 1 , 5)
+        m_xxx.SQLCli_SubmitJOB("stresstest\\q1.sql", 1, 5)
         m_xxx.SQLCli_StartJOB("ALL")
         m_xxx.SQLCli_WaitJOB("ALL")
 
