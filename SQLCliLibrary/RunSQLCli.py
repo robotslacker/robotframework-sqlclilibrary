@@ -11,11 +11,13 @@ import shlex
 class RunSQLCli(object):
     __BreakWithSQLerence = False              # 是否遇到SQL错误就退出，默认是不退出
     __EnableConsoleOutPut = False             # 是否关闭在Console上的显示，默认是不关闭
+    __SQLMapping = None                       # 映射文件列表
 
     __m_CliHandler__ = SQLCli(HeadlessMode=True)
 
     def SQLCli_Connect(self, p_ConnString):
-        """ 连接到数据库上
+        """ 连接到数据库 """
+        """
         输入参数：
              p_ConnString:        连接字符串，格式为:  user/Pass@jdbc.<driver_type><connect_type>://<host>:<port>/<service>
         返回值：
@@ -24,7 +26,8 @@ class RunSQLCli(object):
         self.__m_CliHandler__.DoSQL("CONNECT " + p_ConnString)
 
     def SQLCli_LoadDriver(self, p_DriverFile, p_DriverClass):
-        """ 加载数据库驱动
+        """ 加载数据库驱动 """
+        """
         输入参数：
              p_DriverFile:        数据库驱动文件（Jar包） 的位置
              p_DriverClass：      数据库驱动类
@@ -34,7 +37,8 @@ class RunSQLCli(object):
         self.__m_CliHandler__.DoSQL("LOADDRIVER " + p_DriverFile + " " + p_DriverClass)
 
     def SQLCli_DoSQL(self, p_szSQLString):
-        """ 执行SQL脚本
+        """ 执行SQL脚本 """
+        """
         输入参数：
              p_szSQLString:        具体的SQL语句
         返回值：
@@ -43,7 +47,8 @@ class RunSQLCli(object):
         self.__m_CliHandler__.DoSQL(p_szSQLString)
 
     def SQLCli_SubmitJOB(self, p_szScriptName, p_nCopies=1, p_nLoopCount=1):
-        """ 提交任务到后台作业
+        """ 提交任务到后台作业 """
+        """
         输入参数：
              p_szScriptName:        脚本的名称
              p_nCopies              并发执行的份数，默认为1
@@ -54,7 +59,8 @@ class RunSQLCli(object):
         self.__m_CliHandler__.DoSQL("SUBMITJOB " + p_szScriptName + " " + str(p_nCopies) + " " + str(p_nLoopCount))
 
     def SQLCli_StartJOB(self, p_JobID="ALL"):
-        """ 启动所有后台任务
+        """ 启动所有后台任务 """
+        """
         输入参数：
              p_JobID:        需要启动的JOBID，默认是启动所有尚未启动的任务
         返回值：
@@ -63,7 +69,8 @@ class RunSQLCli(object):
         self.__m_CliHandler__.DoSQL("STARTJOB " + str(p_JobID))
 
     def SQLCli_WaitJOB(self, p_JobID="ALL"):
-        """ 等待JOB全部完成
+        """ 等待JOB全部完成  """
+        """
         输入参数：
              p_JobID:        需要等待的JOBID，默认是等待全部JOB完成
         返回值：
@@ -72,7 +79,8 @@ class RunSQLCli(object):
         self.__m_CliHandler__.DoSQL("WAITJOB " + str(p_JobID))
 
     def SQLCli_Break_When_Error(self, p_BreakWithSQLError):
-        """ 设置是否在遇到错误的时候中断该Case的后续运行
+        """ 设置是否在遇到错误的时候中断该Case的后续运行  """
+        """
         输入参数：
              p_BreakWithSQLError:        是否在遇到SQL错误的时候中断，默认为不中断
         返回值：
@@ -89,7 +97,8 @@ class RunSQLCli(object):
             self.__m_CliHandler__.DoSQL("SET WHENEVER_SQLERROR CONTINUE")
 
     def SQLCli_Enable_ConsoleOutput(self, p_ConsoleOutput):
-        """ 设置是否在在屏幕上显示SQL的执行过程
+        """ 设置是否在在屏幕上显示SQL的执行过程  """
+        """
         输入参数：
              p_ConsoleOutput:        是否在在屏幕上显示SQL的执行过程， 默认是不显示
         返回值：
@@ -103,8 +112,19 @@ class RunSQLCli(object):
         if str(p_ConsoleOutput).upper() == 'FALSE':
             self.__EnableConsoleOutPut = False
 
+    def SQLCli_Set_SQLMAPPING(self, p_szSQLMapping):
+        """ 设置SQLMAPPING文件  """
+        """
+        输入参数：
+             p_szSQLMapping:        SQLMAPPING文件，如果包括多个文件，用，分割
+        返回值：
+            无
+        """
+        self.__SQLMapping = p_szSQLMapping
+
     def Logon_And_Execute_SQL_Script(self, p_szLogonString, p_szSQLScript_FileName, p_szLogOutPutFileName=None):
-        """执行SQL脚本
+        """ 执行SQL脚本  """
+        """
         输入参数：
             p_szLogonString                连接用户名，口令
             p_szSQLScript_FileName         脚本文件名称
@@ -168,32 +188,73 @@ class RunSQLCli(object):
                         m_szLogOutPutFullFileName = os.path.join(os.getcwd(), p_szLogOutPutFileName)
 
             sys.__stdout__.write('\n')                    # 打印一个空行，好保证在Robot上Console显示不错行
-            sys.__stdout__.write('===== Execute [' + m_szSQLScript_FileName + '] ========\n')
-            sys.__stdout__.write('===== LogFile [' + m_szLogOutPutFullFileName + '] ========\n')
+            logger.info('===== Execute   [' + m_szSQLScript_FileName + '] ========')
+            logger.info('===== LogFile   [' + m_szLogOutPutFullFileName + '] ========')
+            logger.info('===== BreakMode [' + str(self.__BreakWithSQLerence) + '] ========')
+            sys.__stdout__.write('===== Execute   [' + m_szSQLScript_FileName + '] ========\n')
+            sys.__stdout__.write('===== LogFile   [' + m_szLogOutPutFullFileName + '] ========\n')
+            sys.__stdout__.write('===== BreakMode [' + str(self.__BreakWithSQLerence) + '] ========\n')
+            sys.__stdout__.write('===== Starting .....\n')
             if not self.__EnableConsoleOutPut:
-                myConsole = open(os.devnull, "w")
+                myConsole = None
                 myHeadLessMode = True
+                mylogger = None
             else:
                 myConsole = sys.__stdout__
                 myHeadLessMode = False
+                mylogger = logger
             cli = SQLCli(logon=p_szLogonString,
                          sqlscript=m_szSQLScript_FileName,
                          logfilename=m_szLogOutPutFullFileName,
                          Console=myConsole,
                          HeadlessMode=myHeadLessMode,
+                         logger=mylogger,
+                         sqlmap=self.__SQLMapping,
                          breakwitherror=self.__BreakWithSQLerence)
             m_Result = cli.run_cli()
+            sys.__stdout__.write('===== End SQLCli with result [' + str(m_Result) + '] \n')
             if self.__BreakWithSQLerence and not m_Result:
+                # 如果日志信息少于30K，则全部打印
+                m_Results = []
+                with open(m_szLogOutPutFullFileName, "rb") as f:
+                    size = f.seek(0, 2)
+                    if size < 30 * 1024:  # 如果文件不足30K，则全部读入
+                        # 回到文件开头
+                        f.seek(0, 0)
+                        for row in f.readlines():
+                            m_Results.append(row.decode('utf-8'))
+                    else:
+                        # 回到文件开头
+                        f.seek(0, 0)
+                        m_ReadBuf = f.readlines(10 * 1024)
+                        for row in m_ReadBuf[0:10]:
+                            m_Results.append(row.decode('utf-8'))
+                        m_Results.append(" .......................   ")
+                        # 来到文件末尾
+                        f.seek(- 20 * 1024, 2)
+                        m_ReadBuf = f.readlines()
+                        for row in m_ReadBuf[-30:]:
+                            m_Results.append(row.decode('utf-8'))
+                sys.__stdout__.write(' =====  SQL Break with Error ========\n')
+                logger.info(' =====  SQL Break with Error ========')
+                for row in m_Results:
+                    sys.__stdout__.write(row)
+                    logger.info(row.replace("\n", ""))
+                logger.info(' =====  SQL Break with Error ========')
+                sys.__stdout__.write(' =====  SQL Break with Error ========\n')
                 raise RuntimeError("SQL Execute failed.")
+        except RuntimeError as ex:
+            raise ex
         except Exception as ex:
             logger.info('str(e):  ', str(ex))
             logger.info('repr(e):  ', repr(ex))
             logger.info('traceback.print_exc():\n%s' % traceback.print_exc())
             logger.info('traceback.format_exc():\n%s' % traceback.format_exc())
-            raise RuntimeError("Internal error. SQL Execute failed.")
+            raise RuntimeError("SQL Execute failed.")
 
     def Execute_SQL_Script(self, p_szSQLScript_FileName, p_szLogOutPutFileName=None):
-        """执行SQL脚本
+        """ 执行SQL脚本  """
+        """
         输入参数：
             p_szSQLScript_FileName         脚本文件名称
             p_szLogOutPutFileName          结果日志文件名称, 如果没有提供，则默认和脚本同名的.log文件
@@ -206,19 +267,4 @@ class RunSQLCli(object):
 
 
 if __name__ == '__main__':
-    m_xxx = RunSQLCli()
-    try:
-        os.chdir("C:\\Work\\linkoop\\sqlcli\\")
-        m_xxx.SQLCli_Break_When_Error(True)
-        m_xxx.SQLCli_LoadDriver("localtest\\linkoopdb-jdbc-2.3.0.jar", "com.datapps.linkoopdb.jdbc.JdbcDriver")
-        m_xxx.SQLCli_Connect("admin/123456@jdbc:linkoopdb:tcp://192.168.174.23:9105/ldb")
-        m_xxx.SQLCli_SubmitJOB("stresstest\\q1.sql", 1, 5)
-        m_xxx.SQLCli_StartJOB("ALL")
-        m_xxx.SQLCli_WaitJOB("ALL")
-
-    except Exception as e:
-        print('str(e):  ', str(e))
-        print('repr(e):  ', repr(e))
-        print('traceback.print_exc():\n%s' % traceback.print_exc())
-        print('traceback.format_exc():\n%s' % traceback.format_exc())
-    print("RunSQLCli. Please use this in RobotFramework.")
+    pass

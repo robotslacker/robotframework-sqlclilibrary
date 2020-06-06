@@ -29,7 +29,8 @@ class LinkoopSQLParse:
     db_service_name = None
 
     def Verify_LinkoopSQLAndComments(self, p_filename, p_username, p_password):
-        """ 对LinkoopDB中， 处理合并SQL和注释的的脚本
+        """ 对LinkoopDB中， 处理合并SQL和注释的的脚本  """
+        """
          输入参数：
               p_filename:        需要处理的脚本
               p_username：        数据库连接用户名
