@@ -5,12 +5,19 @@ import traceback
 
 from sqlcli.main import SQLCli
 from robot.api import logger
+from robot.running.context import EXECUTION_CONTEXTS
 import shlex
 
 
 class RunSQLCli(object):
-    __BreakWithSQLerence = False              # 是否遇到SQL错误就退出，默认是不退出
-    __EnableConsoleOutPut = False             # 是否关闭在Console上的显示，默认是不关闭
+    # TEST SUITE 在suite中引用，只会实例化一次
+    # 也就是说多test case都引用了这个类的方法，但是只有第一个test case调用的时候实例化
+    # 如果一个Suite多个Case引用设置类的方法，要注意先后的影响
+    ROBOT_LIBRARY_SCOPE = 'TEST SUITE'
+
+    __BreakWithSQLError = False              # 是否遇到SQL错误就退出，默认是不退出
+    __EnableConsoleOutPut = False            # 是否关闭在Console上的显示，默认是不关闭
+    __EnablePerfLog = False                  # 是否打开SQL日志记录，默认是不打开
     __SQLMapping = None                       # 映射文件列表
 
     __m_CliHandler__ = SQLCli(HeadlessMode=True)
@@ -90,11 +97,27 @@ class RunSQLCli(object):
         如果设置为False，则SQLCli运行不会中断，运行结果文件中有错误信息，供参考
         """
         if str(p_BreakWithSQLError).upper() == 'TRUE':
-            self.__BreakWithSQLerence = True
+            self.__BreakWithSQLError = True
             self.__m_CliHandler__.DoSQL("SET WHENEVER_SQLERROR EXIT")
         if str(p_BreakWithSQLError).upper() == 'FALSE':
-            self.__BreakWithSQLerence = False
+            self.__BreakWithSQLError = False
             self.__m_CliHandler__.DoSQL("SET WHENEVER_SQLERROR CONTINUE")
+
+    def SQLCli_Enable_PerfLog(self, p_PerfLog):
+        """ 设置是否在在屏幕上显示SQL的执行过程  """
+        """
+        输入参数：
+             p_ConsoleOutput:        是否在在屏幕上显示SQL的执行过程， 默认是不显示
+        返回值：
+            无
+
+        如果设置为True，则所有SQL执行的过程不仅仅会记录在日之内，也会显示在控制台上
+        如果设置为False，则所有SQL执行的过程仅仅会记录在日之内，不会显示在控制台上
+        """
+        if str(p_PerfLog).upper() == 'TRUE':
+            self.__EnablePerfLog = True
+        if str(p_PerfLog).upper() == 'FALSE':
+            self.__EnablePerfLog = False
 
     def SQLCli_Enable_ConsoleOutput(self, p_ConsoleOutput):
         """ 设置是否在在屏幕上显示SQL的执行过程  """
@@ -178,22 +201,36 @@ class RunSQLCli(object):
                         os.path.basename(p_szSQLScript_FileName).split('.')[0] + ".log")
                     m_szLogOutPutFullFileName = os.path.join(os.getcwd(), m_szLogOutPutFileName)
             else:
-                if os.path.exists(os.path.dirname(p_szLogOutPutFileName)):
-                    # 全路径名
-                    m_szLogOutPutFullFileName = p_szLogOutPutFileName
+                if "T_WORK" in os.environ:
+                    m_szLogOutPutFullFileName = os.path.join(os.environ["T_WORK"], p_szLogOutPutFileName)
                 else:
-                    if "T_WORK" in os.environ:
-                        m_szLogOutPutFullFileName = os.path.join(os.environ["T_WORK"], p_szLogOutPutFileName)
-                    else:
-                        m_szLogOutPutFullFileName = os.path.join(os.getcwd(), p_szLogOutPutFileName)
+                    m_szLogOutPutFullFileName = os.path.join(os.getcwd(), p_szLogOutPutFileName)
+            # 如果Log目录不存在，则创建Log目录
+            if not os.path.exists(os.path.dirname(m_szLogOutPutFullFileName)):
+                os.makedirs(os.path.dirname(m_szLogOutPutFullFileName))
+
+            # perf文件默认存放在log文件目录下
+            if self.__EnablePerfLog:
+                if "T_WORK" in os.environ:
+                    m_szPerfOutPutFileName = os.path.join(
+                        os.environ["T_WORK"],
+                        os.path.basename(p_szSQLScript_FileName).split('.')[0] + ".perf")
+                    m_szPerfOutPutFullFileName = os.path.join(os.environ["T_WORK"], m_szPerfOutPutFileName)
+                else:
+                    m_szPerfOutPutFileName = os.path.join(
+                        os.getcwd(),
+                        os.path.basename(p_szSQLScript_FileName).split('.')[0] + ".perf")
+                    m_szPerfOutPutFullFileName = os.path.join(os.getcwd(), m_szPerfOutPutFileName)
+            else:
+                m_szPerfOutPutFullFileName = None
 
             sys.__stdout__.write('\n')                    # 打印一个空行，好保证在Robot上Console显示不错行
             logger.info('===== Execute   [' + m_szSQLScript_FileName + '] ========')
             logger.info('===== LogFile   [' + m_szLogOutPutFullFileName + '] ========')
-            logger.info('===== BreakMode [' + str(self.__BreakWithSQLerence) + '] ========')
+            logger.info('===== BreakMode [' + str(self.__BreakWithSQLError) + '] ========')
             sys.__stdout__.write('===== Execute   [' + m_szSQLScript_FileName + '] ========\n')
             sys.__stdout__.write('===== LogFile   [' + m_szLogOutPutFullFileName + '] ========\n')
-            sys.__stdout__.write('===== BreakMode [' + str(self.__BreakWithSQLerence) + '] ========\n')
+            sys.__stdout__.write('===== BreakMode [' + str(self.__BreakWithSQLError) + '] ========\n')
             sys.__stdout__.write('===== Starting .....\n')
             if not self.__EnableConsoleOutPut:
                 myConsole = None
@@ -203,6 +240,13 @@ class RunSQLCli(object):
                 myConsole = sys.__stdout__
                 myHeadLessMode = False
                 mylogger = logger
+            m_SuiteName = os.path.basename(str(EXECUTION_CONTEXTS.current.variables['${SUITE_SOURCE}']))
+            if "${TEST_NAME}" in EXECUTION_CONTEXTS.current.variables:
+                m_TestName = str(EXECUTION_CONTEXTS.current.variables['${TEST_NAME}'])
+            else:
+                m_TestName =  str(EXECUTION_CONTEXTS.current.variables['${PREV_TEST_NAME}'])
+            m_WorkerName = m_SuiteName+":"+m_TestName
+
             cli = SQLCli(logon=p_szLogonString,
                          sqlscript=m_szSQLScript_FileName,
                          logfilename=m_szLogOutPutFullFileName,
@@ -210,11 +254,14 @@ class RunSQLCli(object):
                          HeadlessMode=myHeadLessMode,
                          logger=mylogger,
                          sqlmap=self.__SQLMapping,
-                         breakwitherror=self.__BreakWithSQLerence)
+                         breakwitherror=self.__BreakWithSQLError,
+                         sqlperf=m_szPerfOutPutFullFileName,
+                         WorkerName=m_WorkerName)
             m_Result = cli.run_cli()
             sys.__stdout__.write('===== End SQLCli with result [' + str(m_Result) + '] \n')
-            if self.__BreakWithSQLerence and not m_Result:
+            if self.__BreakWithSQLError and not m_Result and not self.__EnableConsoleOutPut:
                 # 如果日志信息少于30K，则全部打印
+                # 只有在没有打印日志的时候，才有必要把最后的失败日志给打印出来，否则不打印
                 m_Results = []
                 with open(m_szLogOutPutFullFileName, "rb") as f:
                     size = f.seek(0, 2)

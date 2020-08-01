@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 
 from SQLCliLibrary.RunSQLCli import RunSQLCli
-from SQLCliLibrary.LinkoopSQLParse import LinkoopSQLParse
 
 
-class SQLCliLibrary(RunSQLCli, LinkoopSQLParse):
+class SQLCliLibrary(RunSQLCli):
     """ RobotFrameWork 扩展库
 
     `SQLCliLibrary` 是RobotFrameWork的一个扩展库，通过这个扩展库，我们可以在Robot中利用SQLCli工具执行SQL脚本
@@ -40,6 +39,5 @@ class SQLCliLibrary(RunSQLCli, LinkoopSQLParse):
     如何利用Robot来执行上述文件：
     $>  robot [test file]
     """
-    ROBOT_LIBRARY_SCOPE = 'GLOBAL'
     ROBOT_LIBRARY_DOC_FORMAT = 'TEXT'
-    ROBOT_LIBRARY_VERSION = '0.0.19'
+    ROBOT_LIBRARY_VERSION = '0.0.20'
